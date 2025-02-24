@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  postgres-server:
+    image: postgres:15-alpine
+    container_name: zabbix-postgres
+    environment:
+      POSTGRES_DB: zabbix
+      POSTGRES_USER: zabbix
+      POSTGRES_PASSWORD: zabbix
+    volumes:
+      - pgsql-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zabbix -d zabbix"]
+      interval: 10s
+      retries: 5
+    networks:
+      - backend
+
+  zabbix-db-init:
+    image: zabbix/zabbix-server-pgsql:latest
+    container_name: zabbix-db-init
+    depends_on:
+      postgres-server:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Waiting for PostgreSQL to be ready...";
+        until pg_isready -h postgres-server -U zabbix -d zabbix; do sleep 2; done;
+        echo "Initializing Zabbix database...";
+        psql -h postgres-server -U zabbix -d zabbix < /usr/share/zabbix-server-pgsql/schema.sql;
+        psql -h postgres-server -U zabbix -d zabbix < /usr/share/zabbix-server-pgsql/images.sql;
+        psql -h postgres-server -U zabbix -d zabbix < /usr/share/zabbix-server-pgsql/data.sql;
+        echo "Database initialized!";
+    restart: "no"
+    networks:
+      - backend
+
+  zabbix-server:
+    image: zabbix/zabbix-server-pgsql:latest
+    container_name: zabbix-server
+    depends_on:
+      zabbix-db-init:
+        condition: service_completed_successfully
+    environment:
+      DB_SERVER_HOST: postgres-server
+      POSTGRES_USER: zabbix
+      POSTGRES_PASSWORD: zabbix
+    ports:
+      - "10051:10051"
+    networks:
+      - backend
+
+  zabbix-web:
+    image: zabbix/zabbix-web-nginx-pgsql:latest
+    container_name: zabbix-web
+    depends_on:
+      zabbix-server:
+        condition: service_started
+    environment:
+      DB_SERVER_HOST: postgres-server
+      POSTGRES_USER: zabbix
+      POSTGRES_PASSWORD: zabbix
+      ZBX_SERVER_HOST: zabbix-server
+    ports:
+      - "8080:8080"
+    networks:
+      - frontend
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
+
+volumes:
+  pgsql-data:
+
