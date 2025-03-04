@@ -17,7 +17,7 @@ services:
       POSTGRES_PASSWORD: zabbix
       POSTGRES_DB: zabbix
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql/data
     networks:
       - backend
 
@@ -52,4 +52,4 @@ networks:
     driver: bridge
 
 volumes:
-  pgdata:
+  pg_data:
