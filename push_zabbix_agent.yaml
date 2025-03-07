@@ -1,0 +1,68 @@
+---
+
+- hosts: dnf
+  become: true
+  tasks:
+
+  - name: Install Zabbix repository using DNF
+    ansible.builtin.dnf:
+      name: https://repo.zabbix.com/zabbix/7.0/rocky/9/x86_64/zabbix-release-7.0-5.el9.noarch.rpm
+      state: present
+      disable_gpg_check: "{{ disable_dnf_gpg_check | d(omit) }}"
+
+  - name: Install Zabbix Agent using DNF
+    ansible.builtin.dnf:
+      name: zabbix-agent
+      state: present
+  
+  - name: Restart Zabbix Agent Service...
+    ansible.builtin.systemd_service:
+      state: restarted
+      daemon_reload: true
+      name: zabbix-agent
+
+  - name: Enable Zabbix Agent Service...
+    ansible.builtin.systemd_service:
+      name: zabbix-agent
+      enabled: true
+
+  - name: Configure /etc/zabbix/zabbix_agentd.conf to point to local Zabbix Server...
+    ansible.builtin.replace:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: ^Server=127\.0\.0\.1$
+      replace: Server={{ip_address_of_zabbix_server}}
+
+  - name: Configure for Active Checks...
+    ansible.builtin.replace:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: ^Server=127\.0\.0\.1$
+      replace: ServerActive={{ip_address_of_zabbix_server}}
+
+  - name: Configure /etc/zabbix/zabbix_agentd.conf to add hostname of target...
+    ansible.builtin.replace:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: ^Hostname=Zabbix server$
+      replace: Hostname={{ ansible_hostname }}
+
+  # need to make a task to add metadata to the config file so the server can auto enroll the host.#
+
+  - name: Allowing port 10050 TCP traffic on the firewall and restart firewalld...
+    firewalld:
+      zone: public
+      port: 10050/tcp
+      state: enabled
+      permanent: yes
+
+  - name: Restarting firewalld...
+    service:
+      name: firewalld
+      state: restarted
+
+      
+  - name: Restart Zabbix Agent Service...
+    ansible.builtin.systemd_service:
+      state: restarted
+      daemon_reload: true
+      name: zabbix-agent   
+
+
