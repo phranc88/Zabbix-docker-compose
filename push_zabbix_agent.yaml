@@ -45,6 +45,11 @@
       replace: Hostname={{ ansible_hostname }}
 
   # need to make a task to add metadata to the config file so the server can auto enroll the host.#
+  - name: Add metadata to /etc/zabbix/zabbix_agentd.conf for auto-enrollment
+    ansible.builtin.lineinfile:
+      path: /etc/zabbix/zabbix_agentd.conf
+      line: 'Metadata=linux'
+      create: yes
 
   - name: Allowing port 10050 TCP traffic on the firewall and restart firewalld...
     firewalld:
