@@ -37,6 +37,7 @@ services:
       - zabbix-server
     environment:
       DB_SERVER_HOST: postgres-server
+      ZBX_SERVER_HOST: zabbix-server
     networks:
       - zabbix-net
      
