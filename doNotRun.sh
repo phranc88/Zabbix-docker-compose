@@ -1,22 +1,18 @@
+# DON'T BE A FOOL! DO NOT RUN THIS SCRIPT!
+# This script will crash your system if you run it. Do not run it.
+# This script will append "Chaos!" to output.txt until the file size is greater than the free space in /var/log.
+# The purpose of this script is to test alerting on system crashes.
+
+
 CHAOS="Chaos!"
+free_space=$(df --output=avail /var/log | tail -n 1)
+file_size=$(stat -c%s "output.txt")
 
-echo "Enter the number of times to append to the file:"
-read number
+while [ $file_size -le $free_space ]
 
-counter=1
-
-while [ $counter -le $number ]
 do
-  echo $CHAOS >> output.txt
-  ((counter++))
+
+  echo $CHAOS >> /var/log/output.txt
+
 done
 
-echo "Appended $CHAOS to output.txt $number times."
-
-# Echo the size of the output file
-file_size=$(stat -c%s "output.txt")
-echo "The size of output.txt is $file_size."
-
-# Get the free space in bytes for /var/log
-free_space=$(df --output=avail /var/log | tail -n 1)
-echo "The free space in /var/log is $free_space bytes."
