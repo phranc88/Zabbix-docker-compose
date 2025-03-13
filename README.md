@@ -2,12 +2,14 @@
 
 This repository contains a Docker Compose setup for deploying Zabbix, an open-source monitoring solution for network monitoring and application monitoring.
 
+Please note that the username and password should be altered before running this compose file. Probably would be good practice to use a .env file.
+
 ## Prerequisites
 
 Before you begin, ensure you have the following installed on your system:
 
 - Docker
-- Docker Compose
+- Docker Compose version 3 or later
 
 ## Getting Started
 

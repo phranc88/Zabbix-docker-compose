@@ -67,8 +67,7 @@ services:
     networks:
       - zabbix-net
      
-    ports:
-      - "10050:10050"
+    
     restart: unless-stopped
 
 networks:
